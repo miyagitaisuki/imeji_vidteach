@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "vidteach": {
+      "command": "python",
+      "args": ["C:\\path\\to\\imeji_vidteach\\mcp\\vidteach_mcp.py"],
+      "env": { "TEXTTS_API_URL": "http://127.0.0.1:8000", "QBANK_URL": "http://127.0.0.1:8765" }
+    }
+  }
+}
