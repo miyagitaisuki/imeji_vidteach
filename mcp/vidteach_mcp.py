@@ -398,6 +398,9 @@ def handle(msg: dict):
 
 
 def main():
+    # Windows mặc định cp1252 cho stdin/stdout -> lỗi khi gặp tiếng Việt; MCP dùng UTF-8.
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")
     for line in sys.stdin:
         line = line.strip()
         if not line:
