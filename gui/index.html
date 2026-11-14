@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>vidteach — IMEJI</title>
+<style>
+  :root { --p:#2563eb; --bg:#f8fafc; --card:#fff; --line:#e2e8f0; --muted:#64748b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Be Vietnam Pro","Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:#0f172a; }
+  header { background:var(--p); color:#fff; padding:14px 22px; font-weight:700; font-size:18px; }
+  header span { font-weight:400; opacity:.85; font-size:13px; margin-left:10px; }
+  main { display:grid; grid-template-columns:260px 1fr; gap:16px; padding:16px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; }
+  h2 { font-size:15px; margin:0 0 10px; color:var(--p); }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
+  input, select, textarea { width:100%; padding:7px 9px; border:1px solid var(--line); border-radius:6px; font:inherit; font-size:14px; }
+  textarea { min-height:90px; font-family:"Noto Sans JP",monospace; }
+  button { background:var(--p); color:#fff; border:0; border-radius:6px; padding:8px 14px; font:inherit; cursor:pointer; margin-top:8px; }
+  button:disabled { background:#94a3b8; cursor:not-allowed; }
+  button.ghost { background:#fff; color:var(--p); border:1px solid var(--p); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { border-bottom:1px solid var(--line); padding:5px; text-align:left; }
+  td input { padding:4px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .pill { font-size:11px; background:#dbeafe; color:var(--p); padding:2px 8px; border-radius:99px; }
+  .ok { color:#15803d; } .bad { color:#b91c1c; }
+  #log { background:#0f172a; color:#e2e8f0; font:12px/1.5 monospace; padding:10px; border-radius:8px; height:140px; overflow:auto; white-space:pre-wrap; }
+  video { width:100%; max-height:420px; background:#000; border-radius:8px; margin-top:8px; }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .steps .pill.on { background:var(--p); color:#fff; }
+  ul.plist { list-style:none; padding:0; margin:0; }
+  ul.plist li { padding:7px 8px; border-radius:6px; cursor:pointer; font-size:14px; }
+  ul.plist li:hover, ul.plist li.sel { background:#eff6ff; }
+  small { color:var(--muted); }
+</style>
+</head>
+<body>
+<header>vidteach <span>IMEJI日本語教室 · dựng video, lồng tiếng, câu hỏi Demix</span></header>
+<main>
+  <aside>
+    <section>
+      <h2>Dịch vụ</h2>
+      <div id="svc">…</div>
+    </section>
+    <section>
+      <h2>Dự án</h2>
+      <ul class="plist" id="plist"></ul>
+      <button class="ghost" onclick="newProject()">+ Dự án mới</button>
+    </section>
+  </aside>
+
+  <div>
+    <!-- 1. Tạo dự án + bảng phân cảnh -->
+    <section id="s-scenes">
+      <h2>1 · Dự án và bảng phân cảnh</h2>
+      <div class="row">
+        <div style="flex:2"><label>Tên dự án</label><input id="pname" placeholder="vd: MEO_COOKIE"></div>
+        <div style="flex:1"><label>Khổ</label>
+          <select id="pfmt"><option value="reel">Reel dọc 1080x1920</option><option value="youtube">YouTube 1920x1080</option></select></div>
+      </div>
+      <table id="scenes"><thead><tr><th>#</th><th>Clip (Raw/)</th><th>Từ (s)</th><th>Dài (s)</th><th>Chữ trên cảnh</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="row">
+        <button class="ghost" onclick="addScene()">+ Thêm cảnh</button>
+        <select id="nmusic" style="max-width:320px"><option value="">— không nhạc nền —</option></select>
+        <button onclick="createProject()">Lưu bảng phân cảnh</button>
+      </div>
+      <div id="sceneMsg"></div>
+    </section>
+
+    <!-- 2. Lồng tiếng -->
+    <section id="s-voice">
+      <h2>2 · Lồng tiếng (textts)</h2>
+      <label>Kịch bản: mỗi dòng [1] lời thoại 或 [1] lời // bản dịch Việt</label>
+      <textarea id="script" placeholder="[1] こんにちは。// Xin chào.&#10;[2] はい、よろしく。// Vâng, rất vui được gặp."></textarea>
+      <div class="row">
+        <div><label>Engine</label><select id="engine"><option>voicevox</option><option>aivis</option><option>edge</option></select></div>
+        <div><label>Trình độ</label><select id="level"><option value="">mặc định</option><option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option></select></div>
+        <div><label>&nbsp;</label><label style="margin:0"><input type="checkbox" id="bilingual" style="width:auto"> Song ngữ</label></div>
+      </div>
+      <button onclick="job('voice', 'job/voice', {project: cur, script: $('script').value, engine: $('engine').value, level: $('level').value || null, bilingual: $('bilingual').checked})">Lồng tiếng</button>
+      <div id="voiceInfo"></div>
+    </section>
+
+    <!-- 3. Nháp, duyệt, render cuối -->
+    <section id="s-render">
+      <h2>3 · Bản nháp → duyệt → bản cuối</h2>
+      <div class="steps" id="steps"></div>
+      <div class="row">
+        <button onclick="job('draft', 'job/draft', {project: cur})">Render nháp</button>
+        <label style="margin:0"><input type="checkbox" id="okAppr" style="width:auto"> Thầy đã xem và xác nhận bản nháp</label>
+        <button id="btnAppr" class="ghost" onclick="approve()">Duyệt</button>
+        <button id="btnFinal" onclick="job('final', 'job/final', {project: cur})">Render bản cuối</button>
+      </div>
+      <video id="vdraft" controls></video>
+      <div id="finalInfo"></div>
+    </section>
+
+    <!-- 4. Đẩy Demix -->
+    <section id="s-demix">
+      <h2>4 · Đẩy câu hỏi sang Demix (QBank)</h2>
+      <div class="row">
+        <div><label>ID chương trong QBank</label><input id="chapter" type="number" placeholder="vd: 12"></div>
+      </div>
+      <label>Câu hỏi (JSON): [{"content","options":[],"answer","solution","translation","qtype","bloom"}]</label>
+      <textarea id="questions" placeholder='[{"content":"…","options":["a","b"],"answer":"a","translation":"…"}]'></textarea>
+      <button id="btnPub" onclick="publish()">Đẩy sang Demix (Nháp)</button>
+      <div id="pubInfo"></div>
+    </section>
+
+    <section>
+      <h2>Nhật ký</h2>
+      <div id="log"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let cur = null, raw = [], scenes = [], state = null;
+const log = m => { const l = $('log'); l.textContent += `[${new Date().toLocaleTimeString()}] ${m}\n`; l.scrollTop = l.scrollHeight; };
+const api = async (path, body) => {
+  const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+};
+const fail = e => { log('LỖI: ' + e.message); alert(e.message); };
+
+async function refresh() {
+  state = await api('/api/state');
+  raw = state.raw;
+  $('svc').innerHTML = Object.entries(state.services).map(([k, v]) =>
+    `<div>${k}: <span class="${v === 'ok' ? 'ok' : 'bad'}">${v === 'ok' ? 'sẵn sàng' : v}</span></div>`).join('');
+  $('plist').innerHTML = state.projects.map(p =>
+    `<li class="${p.name === cur ? 'sel' : ''}" onclick="open_('${p.name}')">${p.name} <span class="pill">${p.step}</span><br><small>${p.format}</small></li>`).join('') || '<small>Chưa có dự án</small>';
+  $('nmusic').innerHTML = '<option value="">— không nhạc nền —</option>' + raw.map(f => `<option value="${f.path}">${f.name}</option>`).join('');
+  if (!scenes.length) addScene();
+  [...document.querySelectorAll('select.clip')].forEach(s => s.innerHTML = clipOptions(s.value));
+}
+
+const clipOptions = sel => '<option value="">— chọn clip —</option>' + raw.map(f => `<option value="${f.path}" ${f.path === sel ? 'selected' : ''}>${f.name} (${f.size_mb}MB)</option>`).join('');
+
+function addScene(s = {}) {
+  scenes.push(s);
+  renderScenes();
+}
+function renderScenes() {
+  $('scenes').querySelector('tbody').innerHTML = scenes.map((s, i) => `
+    <tr><td>${i + 1}</td>
+    <td><select class="clip" onchange="scenes[${i}].clip=this.value">${clipOptions(s.clip || '')}</select></td>
+    <td><input type="number" step="0.1" value="${s.start ?? 0}" onchange="scenes[${i}].start=+this.value" style="width:70px"></td>
+    <td><input type="number" step="0.1" value="${s.dur ?? 3}" onchange="scenes[${i}].dur=+this.value" style="width:70px"></td>
+    <td><input value="${s.text || ''}" onchange="scenes[${i}].text=this.value"></td>
+    <td><button class="ghost" onclick="scenes.splice(${i},1);renderScenes()">✕</button></td></tr>`).join('');
+}
+
+async function createProject() {
+  try {
+    const name = $('pname').value.trim();
+    if (!name) throw new Error('Nhập tên dự án');
+    const list = scenes.filter(s => s.clip);
+    if (!list.length) throw new Error('Chọn ít nhất 1 clip');
+    const music = $('nmusic').value ? {file: $('nmusic').value, credit: 'freetouse.com'} : null;
+    const r = await api('/api/new_project', {name, format: $('pfmt').value, scenes: list, music, overwrite: false});
+    $('sceneMsg').innerHTML = `<pre>${r.text}</pre>`;
+    cur = name.replace(/[^\w\-]+/g, '_');
+    log('Tạo dự án ' + cur);
+    await refresh(); await open_(cur);
+  } catch (e) { fail(e); }
+}
+
+async function open_(name) {
+  cur = name;
+  const p = await api('/api/project?name=' + encodeURIComponent(name));
+  $('steps').innerHTML = p.steps.map(s => `<span class="pill ${s === p.step ? 'on' : ''}">${s}</span>`).join('');
+  $('vdraft').src = p.draft_url || '';
+  $('voiceInfo').innerHTML = p.voice ? `<small>Đã có lồng tiếng: ${p.voice.duration_s}s, phụ đề: ${p.voice.has_srt ? 'có' : 'không'}</small>` : '';
+  $('finalInfo').innerHTML = p.final_url ? `<video controls src="${p.final_url}"></video><small>Credit: ${(p.music_credit || '')}</small>` : '';
+  $('okAppr').checked = !!p.approved;
+  $('btnFinal').disabled = !p.approved;
+  $('btnPub').disabled = !p.final_url;
+  $('pubInfo').innerHTML = p.published ? `<small>Đã đẩy ${p.published.created.length} câu, lỗi ${p.published.errors.length}</small>` : '';
+  if (p.scenes) { scenes = p.scenes.map(s => ({...s})); renderScenes(); }
+  $('pname').value = p.name;
+  $('pfmt').value = p.format;
+  await refresh();
+}
+
+function newProject() { cur = null; scenes = []; $('pname').value = ''; addScene(); $('sceneMsg').innerHTML = ''; }
+
+// Việc dài: gửi, rồi hỏi trạng thái mỗi giây
+async function job(label, path, body) {
+  try {
+    if (!cur) throw new Error('Chọn hoặc tạo dự án trước');
+    const {job: id} = await api('/api/' + path, body);
+    log(`${label}: đang chạy…`);
+    const timer = setInterval(async () => {
+      const j = await api('/api/job?id=' + id);
+      if (j.state === 'running') return;
+      clearInterval(timer);
+      if (j.state === 'error') { log(`${label}: ${j.error}`); alert(j.error); }
+      else log(`${label}: xong`);
+      await open_(cur);
+    }, 1000);
+  } catch (e) { fail(e); }
+}
+
+async function approve() {
+  try {
+    if (!$('okAppr').checked) throw new Error('Tick xác nhận đã xem bản nháp trước');
+    const r = await api('/api/approve', {project: cur, user_confirmed: true});
+    log('Đã duyệt: ' + r.text.slice(0, 80));
+    await open_(cur);
+  } catch (e) { fail(e); }
+}
+
+async function publish() {
+  try {
+    const qs = JSON.parse($('questions').value || '[]');
+    if (!qs.length) throw new Error('Nhập ít nhất 1 câu hỏi');
+    const chapter = +$('chapter').value;
+    if (!chapter) throw new Error('Nhập ID chương');
+    await job('Đẩy Demix', 'job/publish', {project: cur, chapter_id: chapter, questions: qs});
+  } catch (e) { fail(e); }
+}
+
+refresh().catch(fail);
+</script>
+</body>
+</html>
