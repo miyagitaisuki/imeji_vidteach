@@ -1,0 +1,26 @@
+[
+ {
+  "clip": 1,
+  "start": 3.1,
+  "dur": 3.5,
+  "motion": 4.9
+ },
+ {
+  "clip": 2,
+  "start": 13.0,
+  "dur": 3.5,
+  "motion": 22.5
+ },
+ {
+  "clip": 3,
+  "start": 11.7,
+  "dur": 3.5,
+  "motion": 21.0
+ },
+ {
+  "clip": 4,
+  "start": 2.0,
+  "dur": 3.5,
+  "motion": 16.2
+ }
+]

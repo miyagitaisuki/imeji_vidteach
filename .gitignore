@@ -1,0 +1,15 @@
+﻿Raw/
+Output video/
+Sample video/
+work/
+node_modules/
+out/
+.hyperframes/
+*.mov
+*.MOV
+*.mp4
+*.mp3
+*.wav
+*.png
+!docs/**/*.png
+.env
